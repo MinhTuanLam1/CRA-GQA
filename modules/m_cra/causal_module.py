@@ -7,6 +7,13 @@ from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
 
 
+def _load_causal_file(path):
+    try:
+        return torch.load(path, weights_only=False)
+    except TypeError:
+        return torch.load(path)
+
+
 class FrontDoorIntervention(nn.Module):
     def __init__(self, cfgs):
         super().__init__()
@@ -74,7 +81,7 @@ class BackDoorIntervention(nn.Module):
 class LinguisticInterventionVocab(nn.Module):
     def __init__(self, causal_feature_path):
         super(LinguisticInterventionVocab, self).__init__()
-        qa_vocab = torch.load(os.path.join(causal_feature_path, "qa_noun_vocab.npy"))["k_center"]
+        qa_vocab = _load_causal_file(os.path.join(causal_feature_path, "qa_noun_vocab.npy"))["k_center"]
         qa_vocab = torch.from_numpy(qa_vocab)
         self.qa_vocab = nn.Parameter(qa_vocab.cuda().to(torch.float32).requires_grad_())
         self.do = BackDoorIntervention()
@@ -87,7 +94,7 @@ class LinguisticInterventionVocab(nn.Module):
 class LinguisticInterventionGraphFID(nn.Module):
     def __init__(self, causal_feature_path):
         super(LinguisticInterventionGraphFID, self).__init__()
-        qa_graphs = torch.load(os.path.join(causal_feature_path, "qa_graphs.npy"))["k_center"]
+        qa_graphs = _load_causal_file(os.path.join(causal_feature_path, "qa_graphs.npy"))["k_center"]
         node = qa_graphs.x
         self.edge = qa_graphs.edge_index
         self.node = nn.Parameter(node.cuda().to(torch.float32).requires_grad_())
@@ -115,7 +122,7 @@ class LinguisticInterventionGraphFID(nn.Module):
 class LinguisticInterventionGraph(nn.Module):
     def __init__(self, cfgs):
         super(LinguisticInterventionGraph, self).__init__()
-        qa_graphs = torch.load(os.path.join(cfgs["dataset"]["causal_feature_path"], "qa_graphs.npy"))["k_center"]
+        qa_graphs = _load_causal_file(os.path.join(cfgs["dataset"]["causal_feature_path"], "qa_graphs.npy"))["k_center"]
         node = qa_graphs.x
         self.edge = qa_graphs.edge_index
         self.node = nn.Parameter(node.cuda().to(torch.float32).requires_grad_())
@@ -139,7 +146,7 @@ class LinguisticInterventionGraph(nn.Module):
 class VisualIntervention(nn.Module):
     def __init__(self, cfgs):
         super(VisualIntervention, self).__init__()
-        visual_clusters = torch.load(os.path.join(cfgs["dataset"]["causal_feature_path"], "visual_clusters.npy"))["k_center"]
+        visual_clusters = _load_causal_file(os.path.join(cfgs["dataset"]["causal_feature_path"], "visual_clusters.npy"))["k_center"]
         self.visual_clusters = nn.Parameter(visual_clusters.cuda().to(torch.float32).requires_grad_())
         self.do = FrontDoorIntervention(cfgs)
         self.norm = nn.LayerNorm(cfgs["model"]["d_model"])

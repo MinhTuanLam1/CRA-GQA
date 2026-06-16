@@ -135,8 +135,10 @@ class BasePipeline(object):
             record_table = pd.DataFrame()
         else:
             record_table = pd.read_csv(record_path)
-        record_table = record_table.append(self.best_recorder['val'], ignore_index=True)
-        record_table = record_table.append(self.best_recorder['test'], ignore_index=True)
+        record_table = pd.concat(
+            [record_table, pd.DataFrame([self.best_recorder["val"], self.best_recorder["test"]])],
+            ignore_index=True,
+        )
         record_table.to_csv(record_path, index=False)
 
     def _save_checkpoint(self, epoch, save_best=False):
@@ -157,7 +159,10 @@ class BasePipeline(object):
     def _resume_checkpoint(self, resume_path):
         resume_path = str(resume_path)
         print("Loading checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path)
+        try:
+            checkpoint = torch.load(resume_path, weights_only=False)
+        except TypeError:
+            checkpoint = torch.load(resume_path)
         self.start_epoch = checkpoint['epoch'] + 1
         self.mnt_best = checkpoint['monitor_best']
         self.model.load_state_dict(checkpoint['state_dict']) # , strict=False)

@@ -7,7 +7,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import torch
 import yaml
 
 
@@ -47,6 +46,12 @@ def ensure_repo(repo_root: Path | None = None) -> Path:
 
 
 def install_smoke_deps() -> None:
+    """Install deps with numpy 2.x first (Kaggle images often ship numpy 1.x)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "numpy==2.0.1"],
+        check=True,
+    )
+
     packages = [
         "transformers==4.47.1",
         "h5py==3.12.1",
@@ -56,9 +61,22 @@ def install_smoke_deps() -> None:
         "scipy==1.15.0",
         "peft==0.14.0",
         "sentencepiece==0.2.0",
+        "dominate==2.9.1",
         "torch-geometric==2.6.1",
     ]
-    subprocess.run([sys.executable, "-m", "pip", "install", "-q", *packages], check=True)
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", *packages],
+        check=True,
+    )
+
+    import numpy as np
+
+    if not hasattr(np, "_no_nep50_warning"):
+        raise RuntimeError(
+            f"numpy {np.__version__} is too old for transformers 4.47. "
+            "Restart the kernel, rerun from the top, and ensure the pip cell runs first."
+        )
+    print("numpy:", np.__version__)
 
 
 def patch_roberta_paths(model_name: str = "roberta-base") -> None:
@@ -108,5 +126,7 @@ def load_smoke_config(
 
 
 def assert_cuda_ready() -> None:
+    import torch
+
     if not torch.cuda.is_available():
         raise RuntimeError("GPU not available. Set Kaggle accelerator to GPU before running this notebook.")

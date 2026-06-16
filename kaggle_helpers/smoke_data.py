@@ -13,23 +13,32 @@ from torch_geometric.data import Data
 
 
 def _sample_rows(n_videos: int = 2, n_q_per_video: int = 4) -> pd.DataFrame:
+    choices = [
+        "A person walks",
+        "A car drives",
+        "A dog runs",
+        "Nothing happens",
+        "A bird flies",
+    ]
     rows = []
     for vi in range(n_videos):
         vid = f"vid{vi:03d}"
         for qi in range(n_q_per_video):
             qid = f"q{qi:03d}"
+            ans_idx = (vi * n_q_per_video + qi) % len(choices)
+            answer = choices[ans_idx]
             rows.append(
                 {
                     "video_id": vid,
-                    "question": f"What is happening in video {vi} question {qi}?",
-                    "answer": "A person walks",
+                    "question": f"What happens in video {vi} at step {qi}?",
+                    "answer": answer,
                     "qid": qid,
                     "type": "Tem",
-                    "a0": "A person walks",
-                    "a1": "A car drives",
-                    "a2": "A dog runs",
-                    "a3": "Nothing happens",
-                    "a4": "A bird flies",
+                    "a0": choices[0],
+                    "a1": choices[1],
+                    "a2": choices[2],
+                    "a3": choices[3],
+                    "a4": choices[4],
                 }
             )
     return pd.DataFrame(rows)
@@ -81,7 +90,7 @@ def setup_smoke_dataset(root: str | Path = "data", max_feats: int = 8) -> dict[s
     feat_dir = root / "nextqa" / "video_feature" / "CLIP_L"
     causal_dir = csv_dir / "causal_feature"
 
-    train_df = _sample_rows(n_videos=2, n_q_per_video=4)
+    train_df = _sample_rows(n_videos=3, n_q_per_video=4)
     val_df = _sample_rows(n_videos=1, n_q_per_video=4)
     test_df = _sample_rows(n_videos=1, n_q_per_video=4)
 
