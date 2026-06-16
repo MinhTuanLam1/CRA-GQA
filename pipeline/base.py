@@ -122,14 +122,15 @@ class BasePipeline(object):
         crt_time = time.asctime(time.localtime(time.time()))
         self.best_recorder['val']['time'] = crt_time
         self.best_recorder['test']['time'] = crt_time
-        self.best_recorder['val']['seed'] = self.args["seed"]
-        self.best_recorder['test']['seed'] = self.args["seed"]
+        self.best_recorder['val']['seed'] = self.cfgs["misc"]["seed"]
+        self.best_recorder['test']['seed'] = self.cfgs["misc"]["seed"]
         self.best_recorder['val']['best_model_from'] = 'val'
         self.best_recorder['test']['best_model_from'] = 'test'
 
-        if not os.path.exists(self.args["record_dir"]):
-            os.makedirs(self.args["record_dir"])
-        record_path = os.path.join(self.args["record_dir"], self.args["dataset_name"] + '.csv')
+        record_dir = self.cfgs["stat"]["record_dir"]
+        if not os.path.exists(record_dir):
+            os.makedirs(record_dir)
+        record_path = os.path.join(record_dir, self.cfgs["dataset"]["name"] + '.csv')
         if not os.path.exists(record_path):
             record_table = pd.DataFrame()
         else:
@@ -184,10 +185,11 @@ class BasePipeline(object):
             self.best_recorder['test'].update(log)
 
     def _print_best(self):
-        print('Best results (w.r.t {}) in validation set:'.format(self.args["monitor_metric"]))
+        monitor_metric = self.cfgs["stat"]["monitor"]["metric"]
+        print('Best results (w.r.t {}) in validation set:'.format(monitor_metric))
         for key, value in self.best_recorder['val'].items():
             print('\t{:15s}: {}'.format(str(key), value))
 
-        print('Best results (w.r.t {}) in test set:'.format(self.args["monitor_metric"]))
+        print('Best results (w.r.t {}) in test set:'.format(monitor_metric))
         for key, value in self.best_recorder['test'].items():
             print('\t{:15s}: {}'.format(str(key), value))
